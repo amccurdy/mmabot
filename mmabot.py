@@ -67,6 +67,19 @@ def balance_subtract(userid, amount):
     res = sub_balance_query.result()
     return res
 
+def odds_to_decimal(odds):
+    odds = int(odds)
+    # if the fighter is the underdog
+    if odds > 0:
+        odds_decimal = (odds + 100) / 100
+    # if the fighter is the favorite
+    elif odds < 0:
+        odds_decimal = (abs(odds) + 100) / abs(odds)
+    # if the odds are zero, which shouldn't happen, return 1 (which would result in a refund)
+    else:
+        odds_decimal = 1
+    odds_decimal = round(odds_decimal, 2)
+    return odds_decimal
 
 def store_bet(userid, bet_amount, bet_fighter):
     bet_instance = {'userid': userid,
@@ -79,6 +92,9 @@ def store_bet(userid, bet_amount, bet_fighter):
 
 
 def process_odds(fighter_name):
+    '''
+    deprecated, needs to be moved to new db backend
+    '''
     odds = {'khabib': 1, 'tony': 5}
     if fighter_name not in odds:
         return None
@@ -108,8 +124,7 @@ async def bet(ctx):
     current_balance = balance_lookup(ctx.author.id)
     # below we're splitting the user's command into a 3-part
     # list and grabbing the second and third positions so we can
-    # grab the amount and the fighter. TODO: make this more
-    # resilient against crazy inputs like negatives.
+    # grab the amount and the fighter. 
     try:
         bet_input = ctx.message.content.split(' ')
         bet_amount = int(bet_input[1])
@@ -157,11 +172,27 @@ async def bet(ctx):
 
 @bot.command(name='bets', help='List your current bets')
 async def bets(ctx):
+    response = '<@%s> - This command isn\'t alive yet :right_fist: :skull:' % (ctx.author.id)
+    await ctx.send(response)
     return 
+
+@bot.command(name='decimal_odds', help='Get decimal payout number based on a vegas odds style number.')
+async def decimal_odds(ctx, odds):
+    message = ctx.message.content.split(' ')
+    response = '<@%s> - Invalid syntax. Use !decimal_odds [odds]' % (ctx.author.id)
+    try:
+        odds = int(message[1])
+        dec_odds = odds_to_decimal(odds)
+        response = '<@%s> - The payout on a %s bet would be %s * your bet amount' % (ctx.author.id, odds, dec_odds)
+    except: 
+        dec_odds = None    
+    await ctx.send(response)
 
 
 @bot.command(name='retract', help='Retract bet; syntax: !retract khabib')
 async def retract(ctx):
+    response = '<@%s> - This command isn\'t alive yet :right_fist: :skull:' % (ctx.author.id)
+    await ctx.send(response)
     return
 
 
@@ -180,11 +211,15 @@ async def claim(ctx):
 
 @bot.command(name='rank', help='Display your overall betting rank based on balance')
 async def rank(ctx):
+    response = '<@%s> - This command isn\'t alive yet :right_fist: :skull:' % (ctx.author.id)
+    await ctx.send(response)
     return
 
 
 @bot.command(name='top10', help='Display the top 10 balances on the server')
 async def topten(ctx):
+    response = '<@%s> - This command isn\'t alive yet :right_fist: :skull:' % (ctx.author.id)
+    await ctx.send(response)
     return
 
 
