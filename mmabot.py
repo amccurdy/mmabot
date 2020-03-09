@@ -18,13 +18,7 @@ dbclient = bigquery.Client(gcpproject)
 bot = commands.Bot(command_prefix='!')
 
 
-# starting to figure out data structure. 'events' will be a dict with 
-# all MMA events that we're doing, and each top-level key will be an 
-# event like ufc249 for a PPV or ufcfn170 for a fight night (non-ppv)
-# fight night. 
-# the structure beyond that is the only way I've found to match
-# fighters to each other. 'odds' is a list that contains tuples of 
-# each fight. The objects in the tuples are key=fighter, value=odds
+# TODO: figure out how to structure fight events in gcp
 events = {'ufc249': {'odds': [({'khabib', -275}, {'tony': 235})], 'bets': []}}
 current_event = 'ufc249'
 
@@ -146,8 +140,8 @@ async def bet(ctx):
     if bet_odds is not None:
         store_bet(ctx.author.id, bet_amount, bet_fighter)
         current_balance = current_balance - bet_amount
-        response = '%s - Bet placed. Current balance: %s %s' % (
-            ctx.author,
+        response = '<@%s> - Bet placed. Current balance: %s %s' % (
+            ctx.author.id,
             current_balance,
             currency
         )
@@ -156,7 +150,7 @@ async def bet(ctx):
         return
     # if the fighter doesn't exist in the odds table
     else:
-        response = '%s - no fighter named %s found.' % (ctx.author, bet_fighter)
+        response = '<@%s> - no fighter named %s found.' % (ctx.author, bet_fighter)
         await ctx.send(response)
         return
 
@@ -198,7 +192,7 @@ async def topten(ctx):
 async def flipacoin(ctx):
     coin_sides = ('Heads', 'Tails')
     results = random.choice(coin_sides)
-    response = '%s - coin flip results: %s' % (ctx.author, results)
+    response = '<@%s> - coin flip results: %s' % (ctx.author, results)
     await ctx.send(response)
     return
 
