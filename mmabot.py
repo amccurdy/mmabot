@@ -2,6 +2,7 @@
 import random
 import sys
 import configparser
+import pdb
 from google.cloud import bigquery
 from discord.ext import commands
 
@@ -26,6 +27,7 @@ def add_new_user(userid):
     add_query_text = 'insert into mmabot.balances (userid, balance) values (%s, 0);' % userid
     add_query = dbclient.query(add_query_text)
     return add_query.result()
+
 
 def balance_lookup(userid):
     query_text = 'select balance from mmabot.balances where userid = %s;' % (userid)
@@ -67,6 +69,7 @@ def balance_subtract(userid, amount):
     res = sub_balance_query.result()
     return res
 
+
 def odds_to_decimal(odds):
     odds = int(odds)
     # if the fighter is the underdog
@@ -80,6 +83,7 @@ def odds_to_decimal(odds):
         odds_decimal = 1
     odds_decimal = round(odds_decimal, 2)
     return odds_decimal
+
 
 def store_bet(userid, bet_amount, bet_fighter):
     bet_instance = {'userid': userid,
@@ -100,6 +104,29 @@ def process_odds(fighter_name):
         return None
     else:
         return odds.get(fighter_name)
+
+
+def resolve_username(userid):
+    user = bot.get_user(userid)
+    #pdb.set_trace()
+    return user.display_name
+
+
+def get_topten():
+    query_text = 'select userid, balance from mmabot.balances order by balance desc limit 10;' 
+    topten_query = dbclient.query(query_text)
+    topten_result = topten_query.result()
+    topten_rows = [x for x in topten_result]
+    topten_response_string = 'Top 10 balances:\n```'
+    topten_rank = 1
+    for row in topten_rows:
+        userid = row.get('userid')
+        username = resolve_username(userid)
+        balance = row.get('balance')
+        topten_response_string += '%s) %s: %s\n' % (topten_rank, username, balance)
+        topten_rank += 1
+    topten_response_string += '```'
+    return topten_response_string
 
 
 @bot.event
@@ -176,6 +203,7 @@ async def bets(ctx):
     await ctx.send(response)
     return 
 
+
 @bot.command(name='decimal_odds', help='Get decimal payout number based on a vegas odds style number.')
 async def decimal_odds(ctx, odds):
     message = ctx.message.content.split(' ')
@@ -218,7 +246,7 @@ async def rank(ctx):
 
 @bot.command(name='top10', help='Display the top 10 balances on the server')
 async def topten(ctx):
-    response = '<@%s> - This command isn\'t alive yet :right_fist: :skull:' % (ctx.author.id)
+    response = get_topten()
     await ctx.send(response)
     return
 
@@ -227,7 +255,7 @@ async def topten(ctx):
 async def flipacoin(ctx):
     coin_sides = ('Heads', 'Tails')
     results = random.choice(coin_sides)
-    response = '<@%s> - coin flip results: %s' % (ctx.author, results)
+    response = '<@%s> - coin flip results: %s' % (ctx.author.id, results)
     await ctx.send(response)
     return
 
