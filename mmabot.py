@@ -23,6 +23,20 @@ bot = commands.Bot(command_prefix='!')
 events = {'ufc249': {'odds': [({'khabib', -275}, {'tony': 235})], 'bets': []}}
 current_event = 'ufc249'
 
+def get_number_emoji(num_to_convert):
+    nums = {1: ':one:',
+        2: ':two:',
+        3: ':three:',
+        4: ':four:',
+        5: ':five:',
+        6: ':six:',
+        7: ':seven:',
+        8: ':eight:',
+        9: ':nine:',
+        10: ':keycap_ten:',
+    }
+    return nums.get(num_to_convert)
+
 def add_new_user(userid):
     add_query_text = 'insert into mmabot.balances (userid, balance) values (%s, 0);' % userid
     add_query = dbclient.query(add_query_text)
@@ -117,15 +131,16 @@ def get_topten():
     topten_query = dbclient.query(query_text)
     topten_result = topten_query.result()
     topten_rows = [x for x in topten_result]
-    topten_response_string = 'Top 10 balances:\n```'
+    topten_response_string = ':zany_face: :left_fist: Top 10 Balances :right_fist: :star_struck:\n'\
+        '▬▬▬▬▬▬▬▬▬▬▬▬▬\n'
     topten_rank = 1
     for row in topten_rows:
         userid = row.get('userid')
         username = resolve_username(userid)
         balance = row.get('balance')
-        topten_response_string += '%s) %s: %s\n' % (topten_rank, username, balance)
+        topten_response_string += '%s - %s: %s\n' % (get_number_emoji(topten_rank), username, balance)
         topten_rank += 1
-    topten_response_string += '```'
+    topten_response_string += '▬▬▬▬▬▬▬▬▬▬▬▬▬'
     return topten_response_string
 
 
