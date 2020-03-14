@@ -21,7 +21,11 @@ bot = commands.Bot(command_prefix='!')
 
 # TODO: figure out how to structure fight events in gcp
 events = {'ufc249': {'odds': [({'khabib', -275}, {'tony': 235})], 'bets': []}}
-current_event = 'ufc249'
+current_event = 'ufcfn170'
+
+def get_current_event():
+    return current_event
+
 
 def get_number_emoji(num_to_convert):
     nums = {1: ':one:',
@@ -38,7 +42,7 @@ def get_number_emoji(num_to_convert):
     return nums.get(num_to_convert)
 
 def add_new_user(userid):
-    add_query_text = 'insert into mmabot.balances (userid, balance) values (%s, 0);' % userid
+    add_query_text = 'insert into mmabot.balances (userid, balance) values (%s, 0);' % (userid)
     add_query = dbclient.query(add_query_text)
     return add_query.result()
 
@@ -82,6 +86,29 @@ def balance_subtract(userid, amount):
     print('Updating Balance: %s' % (sub_balance_text))
     res = sub_balance_query.result()
     return res
+
+def check_claim_eligibility(userid):
+    evt = get_current_event()
+    check_claim_text = 'select userid from mmabot.claims where userid = %s and event = \'%s\';' % (userid, evt)
+    check_claim_query = dbclient.query(check_claim_text)
+    result = check_claim_query.result()
+    if len([x for x in result]) == 0:
+        return True
+    else:
+        return False
+
+
+def process_claim(userid):
+    evt = get_current_event()
+    if check_claim_eligibility(userid):
+        render_ineligible_text = 'insert into mmabot.claims (userid, event) values (%s, \'%s\');' % (userid, evt)
+        render_ineligible_query = dbclient.query(render_ineligible_text)
+        result = render_ineligible_query.result()
+        balance_add(userid, 100)
+        response = 'You\'ve claimed 100 %s for %s' % (currency, evt)
+        return response
+    else: 
+        return 'You\'re ineligible to claim %s for %s' % (currency, evt)
 
 
 def odds_to_decimal(odds):
@@ -245,9 +272,8 @@ async def claim(ctx):
     TODO: Have this only work once per event. For now, it's the wild west. Anyone
     Can claim whatever they want as often as they want. 
     '''
-    balance_add(ctx.author.id, 100)
-    new_balance = balance_lookup(ctx.author.id)
-    response = '<@%s> - Adding 100 %s to your balance. Your new balance is %s.' % (ctx.author.id, currency, new_balance)
+    claim_attempt = process_claim(ctx.author.id)
+    response = '<@%s> - %s' % (ctx.author.id, claim_attempt)
     await ctx.send(response)
     return 
 
